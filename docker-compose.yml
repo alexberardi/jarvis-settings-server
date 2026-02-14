@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  jarvis-settings-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jarvis-settings-server
+    ports:
+      - "8014:8014"
+    environment:
+      - PORT=8014
+      - HOST=0.0.0.0
+      - JARVIS_CONFIG_URL=http://host.docker.internal:8013
+      - JARVIS_AUTH_SECRET_KEY=${JARVIS_AUTH_SECRET_KEY}
+      - JARVIS_AUTH_ALGORITHM=HS256
+      - SERVICE_TIMEOUT=10.0
+      - JARVIS_LOG_CONSOLE_LEVEL=INFO
+      - JARVIS_APP_ID=jarvis-settings-server
+      - JARVIS_APP_KEY=${JARVIS_APP_KEY:-}
+    extra_hosts:
+      - "${DOCKER_HOST_ALIAS:-host.docker.internal}:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8014/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
