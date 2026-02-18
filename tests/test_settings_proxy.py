@@ -147,7 +147,6 @@ class TestFetchServiceSettings:
 class TestFetchAllServicesSettings:
     """Test fetching settings from multiple services."""
 
-    @respx.mock
     @pytest.mark.asyncio
     async def test_fetches_from_multiple_services(self, sample_token):
         """Should fetch from all services concurrently."""
@@ -168,19 +167,21 @@ class TestFetchAllServicesSettings:
             ),
         ]
 
-        respx.get("http://localhost:7701/settings").mock(
-            return_value=Response(200, json={"settings": [], "total": 0})
-        )
-        respx.get("http://localhost:7702/settings").mock(
-            return_value=Response(200, json={"settings": [], "total": 0})
-        )
+        async with respx.mock:
+            respx.get("http://localhost:7701/settings").respond(
+                200, json={"settings": [], "total": 0}
+            )
+            respx.get("http://localhost:7702/settings").respond(
+                200, json={"settings": [], "total": 0}
+            )
 
-        results = await fetch_all_services_settings(services, sample_token)
+            results = await fetch_all_services_settings(services, sample_token)
 
         assert len(results) == 2
-        assert all(r.success for r in results)
+        assert all(r.success for r in results), (
+            f"Failures: {[(r.service_name, r.error) for r in results if not r.success]}"
+        )
 
-    @respx.mock
     @pytest.mark.asyncio
     async def test_handles_partial_failures(self, sample_token):
         """Should handle some services failing."""
@@ -201,14 +202,13 @@ class TestFetchAllServicesSettings:
             ),
         ]
 
-        respx.get("http://localhost:7701/settings").mock(
-            return_value=Response(200, json={"settings": [], "total": 0})
-        )
-        respx.get("http://localhost:9999/settings").mock(
-            return_value=Response(500, text="Error")
-        )
+        async with respx.mock:
+            respx.get("http://localhost:7701/settings").respond(
+                200, json={"settings": [], "total": 0}
+            )
+            respx.get("http://localhost:9999/settings").respond(500, text="Error")
 
-        results = await fetch_all_services_settings(services, sample_token)
+            results = await fetch_all_services_settings(services, sample_token)
 
         assert len(results) == 2
         assert results[0].success is True
