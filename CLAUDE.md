@@ -15,7 +15,7 @@ cp .env.example .env
 # Edit .env and set JARVIS_AUTH_SECRET_KEY (must match jarvis-auth)
 
 # Run
-uvicorn app.main:app --reload --port 8014
+uvicorn app.main:app --reload --port 7708
 
 # Run with Docker
 docker-compose up --build
@@ -37,7 +37,7 @@ jarvis-settings-server (proxy, no local DB)
                 ▼
         ┌───────────────────┐
         │ jarvis-config-    │  (service discovery)
-        │ service :8013     │
+        │ service :7700     │
         └───────────────────┘
                 │
     ┌───────────┼───────────┐
@@ -70,23 +70,22 @@ jarvis-auth  jarvis-llm   jarvis-*
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `PORT` | No | 8014 | Server port |
+| `PORT` | No | 7708 | Server port |
 | `HOST` | No | 0.0.0.0 | Server host |
-| `JARVIS_CONFIG_URL` | No | http://localhost:8013 | Config service URL |
+| `JARVIS_CONFIG_URL` | No | http://localhost:7700 | Config service URL |
 | `JARVIS_AUTH_SECRET_KEY` | **Yes** | - | Must match jarvis-auth SECRET_KEY |
 | `JARVIS_AUTH_ALGORITHM` | No | HS256 | JWT algorithm |
 | `SERVICE_TIMEOUT` | No | 10.0 | HTTP timeout (seconds) |
 
 ## Service Settings Path Mapping
 
-Services have different settings endpoint paths:
+All services use `/settings` by default (jarvis-settings-client convention).
+Override in `SETTINGS_PATHS` dict only if a service uses a non-standard path.
 
-| Service | Settings Path |
-|---------|---------------|
-| jarvis-llm-proxy-api | `/settings` |
-| jarvis-command-center | `/api/v0/settings` |
-| jarvis-auth | `/settings` |
-| All others | `/v1/settings` |
+**Excluded services** (no settings endpoint or self-referential):
+- `jarvis-settings-server` (self — would create circular request)
+- `jarvis-mcp` (no settings endpoint)
+- `jarvis-config-service` (no settings endpoint)
 
 ## Dependencies
 
@@ -95,8 +94,8 @@ Services have different settings endpoint paths:
 - python-jose (JWT validation)
 
 **Service Dependencies:**
-- ✅ **Required**: `jarvis-config-service` (8013) - Service discovery
-- ✅ **Required**: `jarvis-auth` (8007) - JWT secret must match for token validation
+- ✅ **Required**: `jarvis-config-service` (7700) - Service discovery
+- ✅ **Required**: `jarvis-auth` (7701) - JWT secret must match for token validation
 - ⚠️ **Optional**: All jarvis services with `/settings` or `/v1/settings` endpoints
 
 **Used By:**
@@ -112,18 +111,18 @@ Services have different settings endpoint paths:
 ```bash
 # Get all settings (requires superuser token)
 curl -H "Authorization: Bearer <superuser-jwt>" \
-     http://localhost:8014/v1/settings/
+     http://localhost:7708/v1/settings/
 
 # Get settings from jarvis-auth only
 curl -H "Authorization: Bearer <superuser-jwt>" \
-     http://localhost:8014/v1/settings/jarvis-auth
+     http://localhost:7708/v1/settings/jarvis-auth
 
 # Update a setting on jarvis-llm-proxy-api
 curl -X PUT \
      -H "Authorization: Bearer <superuser-jwt>" \
      -H "Content-Type: application/json" \
      -d '{"value": "new-value"}' \
-     http://localhost:8014/v1/settings/jarvis-llm-proxy-api/model.name
+     http://localhost:7708/v1/settings/jarvis-llm-proxy-api/model.name
 ```
 
 ## Creating a Superuser
@@ -135,7 +134,7 @@ curl -X PUT \
      -H "X-Jarvis-App-Key: your-app-key" \
      -H "Content-Type: application/json" \
      -d '{"is_superuser": true}' \
-     http://localhost:8007/admin/users/1/superuser
+     http://localhost:7701/admin/users/1/superuser
 ```
 
 ## Project Structure

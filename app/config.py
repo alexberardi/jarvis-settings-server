@@ -8,11 +8,11 @@ class Settings:
     """Application settings loaded from environment variables."""
 
     # Server settings
-    PORT: int = int(os.getenv("PORT", "8014"))
+    PORT: int = int(os.getenv("PORT", "7708"))
     HOST: str = os.getenv("HOST", "0.0.0.0")
 
     # jarvis-config-service URL for service discovery
-    JARVIS_CONFIG_URL: str = os.getenv("JARVIS_CONFIG_URL", "http://localhost:8013")
+    JARVIS_CONFIG_URL: str = os.getenv("JARVIS_CONFIG_URL", "http://localhost:7700")
 
     # JWT settings - must match jarvis-auth
     JARVIS_AUTH_SECRET_KEY: str = os.getenv("JARVIS_AUTH_SECRET_KEY", "")

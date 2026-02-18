@@ -10,7 +10,7 @@ from jose import jwt
 # Set environment before imports
 os.environ["JARVIS_AUTH_SECRET_KEY"] = "test-secret-key-for-settings-server"
 os.environ["JARVIS_AUTH_ALGORITHM"] = "HS256"
-os.environ["JARVIS_CONFIG_URL"] = "http://localhost:8013"
+os.environ["JARVIS_CONFIG_URL"] = "http://localhost:7700"
 os.environ["SERVICE_TIMEOUT"] = "5.0"
 
 from app.main import app

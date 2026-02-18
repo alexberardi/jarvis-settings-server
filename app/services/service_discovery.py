@@ -9,14 +9,17 @@ from app.config import get_settings
 from app.schemas import ServiceInfo, ServiceListResponse
 
 
-# Map service names to their settings path
-# Most services use /v1/settings, but some have different patterns
-SETTINGS_PATHS: dict[str, str] = {
-    "jarvis-llm-proxy-api": "/settings",
-    "jarvis-command-center": "/api/v0/settings",
-    "jarvis-auth": "/settings",
-    # Default for all others: /v1/settings
+# Services to exclude from settings aggregation
+EXCLUDED_SERVICES: set[str] = {
+    "jarvis-settings-server",  # Self — would create circular request
+    "jarvis-mcp",              # No settings endpoint
+    "jarvis-config-service",   # No settings endpoint
 }
+
+# Map service names to their settings path
+# All services use /settings by default (jarvis-settings-client convention)
+# Add overrides here only if a service uses a non-standard path
+SETTINGS_PATHS: dict[str, str] = {}
 
 
 def get_settings_path(service_name: str) -> str:
@@ -26,9 +29,9 @@ def get_settings_path(service_name: str) -> str:
         service_name: Name of the service
 
     Returns:
-        The path to the settings endpoint (e.g., "/v1/settings")
+        The path to the settings endpoint (e.g., "/settings")
     """
-    return SETTINGS_PATHS.get(service_name, "/v1/settings")
+    return SETTINGS_PATHS.get(service_name, "/settings")
 
 
 def get_settings_url(service: ServiceInfo) -> str:
@@ -67,10 +70,15 @@ async def get_services(
         data = response.json()
         service_list = ServiceListResponse(**data)
 
-        if service_filter:
-            return [s for s in service_list.services if s.name == service_filter]
+        services = [
+            s for s in service_list.services
+            if s.name not in EXCLUDED_SERVICES
+        ]
 
-        return service_list.services
+        if service_filter:
+            return [s for s in services if s.name == service_filter]
+
+        return services
 
 
 async def get_service_by_name(service_name: str) -> ServiceInfo | None:
