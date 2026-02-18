@@ -18,9 +18,9 @@ def sample_service() -> ServiceInfo:
     return ServiceInfo(
         name="jarvis-auth",
         host="localhost",
-        port=8007,
+        port=7701,
         scheme="http",
-        url="http://localhost:8007",
+        url="http://localhost:7701",
         health_path="/health",
     )
 
@@ -38,7 +38,7 @@ class TestFetchServiceSettings:
     @pytest.mark.asyncio
     async def test_successful_fetch(self, sample_service, sample_token):
         """Should fetch settings successfully."""
-        respx.get("http://localhost:8007/settings").mock(
+        respx.get("http://localhost:7701/settings").mock(
             return_value=Response(
                 200,
                 json={
@@ -71,7 +71,7 @@ class TestFetchServiceSettings:
     @pytest.mark.asyncio
     async def test_with_category_filter(self, sample_service, sample_token):
         """Should pass category filter to service."""
-        respx.get("http://localhost:8007/settings", params={"category": "model"}).mock(
+        respx.get("http://localhost:7701/settings", params={"category": "model"}).mock(
             return_value=Response(
                 200,
                 json={"settings": [], "total": 0},
@@ -86,7 +86,7 @@ class TestFetchServiceSettings:
     @pytest.mark.asyncio
     async def test_handles_http_error(self, sample_service, sample_token):
         """Should handle HTTP errors gracefully."""
-        respx.get("http://localhost:8007/settings").mock(
+        respx.get("http://localhost:7701/settings").mock(
             return_value=Response(500, text="Internal Server Error")
         )
 
@@ -102,7 +102,7 @@ class TestFetchServiceSettings:
         """Should handle connection errors gracefully."""
         import httpx as httpx_lib
 
-        respx.get("http://localhost:8007/settings").mock(
+        respx.get("http://localhost:7701/settings").mock(
             side_effect=httpx_lib.ConnectError("Connection refused")
         )
 
@@ -111,6 +111,37 @@ class TestFetchServiceSettings:
         assert result.success is False
         assert result.error is not None
         assert "Connection refused" in result.error
+
+    @respx.mock
+    @pytest.mark.asyncio
+    async def test_handles_timeout_error(self, sample_service, sample_token):
+        """Should handle timeout errors gracefully."""
+        import httpx as httpx_lib
+
+        respx.get("http://localhost:7701/settings").mock(
+            side_effect=httpx_lib.ReadTimeout("Read timed out")
+        )
+
+        result = await fetch_service_settings(sample_service, sample_token)
+
+        assert result.success is False
+        assert result.error is not None
+        assert "timeout" in result.error.lower()
+
+    @respx.mock
+    @pytest.mark.asyncio
+    async def test_handles_generic_request_error(self, sample_service, sample_token):
+        """Should handle generic request errors gracefully."""
+        import httpx as httpx_lib
+
+        respx.get("http://localhost:7701/settings").mock(
+            side_effect=httpx_lib.RequestError("Something broke")
+        )
+
+        result = await fetch_service_settings(sample_service, sample_token)
+
+        assert result.success is False
+        assert result.error is not None
 
 
 class TestFetchAllServicesSettings:
@@ -124,23 +155,23 @@ class TestFetchAllServicesSettings:
             ServiceInfo(
                 name="jarvis-auth",
                 host="localhost",
-                port=8007,
+                port=7701,
                 scheme="http",
-                url="http://localhost:8007",
+                url="http://localhost:7701",
             ),
             ServiceInfo(
                 name="jarvis-logs",
                 host="localhost",
-                port=8006,
+                port=7702,
                 scheme="http",
-                url="http://localhost:8006",
+                url="http://localhost:7702",
             ),
         ]
 
-        respx.get("http://localhost:8007/settings").mock(
+        respx.get("http://localhost:7701/settings").mock(
             return_value=Response(200, json={"settings": [], "total": 0})
         )
-        respx.get("http://localhost:8006/v1/settings").mock(
+        respx.get("http://localhost:7702/settings").mock(
             return_value=Response(200, json={"settings": [], "total": 0})
         )
 
@@ -157,9 +188,9 @@ class TestFetchAllServicesSettings:
             ServiceInfo(
                 name="jarvis-auth",
                 host="localhost",
-                port=8007,
+                port=7701,
                 scheme="http",
-                url="http://localhost:8007",
+                url="http://localhost:7701",
             ),
             ServiceInfo(
                 name="jarvis-broken",
@@ -170,10 +201,10 @@ class TestFetchAllServicesSettings:
             ),
         ]
 
-        respx.get("http://localhost:8007/settings").mock(
+        respx.get("http://localhost:7701/settings").mock(
             return_value=Response(200, json={"settings": [], "total": 0})
         )
-        respx.get("http://localhost:9999/v1/settings").mock(
+        respx.get("http://localhost:9999/settings").mock(
             return_value=Response(500, text="Error")
         )
 
@@ -191,7 +222,7 @@ class TestUpdateServiceSetting:
     @pytest.mark.asyncio
     async def test_successful_update(self, sample_service, sample_token):
         """Should update setting successfully."""
-        respx.put("http://localhost:8007/settings/auth.timeout").mock(
+        respx.put("http://localhost:7701/settings/auth.timeout").mock(
             return_value=Response(
                 200,
                 json={
@@ -214,7 +245,7 @@ class TestUpdateServiceSetting:
     @pytest.mark.asyncio
     async def test_setting_not_found(self, sample_service, sample_token):
         """Should handle setting not found."""
-        respx.put("http://localhost:8007/settings/unknown.key").mock(
+        respx.put("http://localhost:7701/settings/unknown.key").mock(
             return_value=Response(404, text="Not found")
         )
 
@@ -229,7 +260,7 @@ class TestUpdateServiceSetting:
     @pytest.mark.asyncio
     async def test_requires_reload_flag(self, sample_service, sample_token):
         """Should pass through requires_reload flag."""
-        respx.put("http://localhost:8007/settings/auth.secret").mock(
+        respx.put("http://localhost:7701/settings/auth.secret").mock(
             return_value=Response(
                 200,
                 json={
@@ -247,3 +278,18 @@ class TestUpdateServiceSetting:
 
         assert result.success is True
         assert result.requires_reload is True
+
+    @respx.mock
+    @pytest.mark.asyncio
+    async def test_handles_server_error(self, sample_service, sample_token):
+        """Should handle non-200/404 responses."""
+        respx.put("http://localhost:7701/settings/auth.timeout").mock(
+            return_value=Response(500, text="Internal Server Error")
+        )
+
+        result = await update_service_setting(
+            sample_service, sample_token, "auth.timeout", 60
+        )
+
+        assert result.success is False
+        assert "500" in result.message
