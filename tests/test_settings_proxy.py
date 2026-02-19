@@ -84,6 +84,18 @@ class TestFetchServiceSettings:
 
     @respx.mock
     @pytest.mark.asyncio
+    async def test_returns_none_for_404(self, sample_service, sample_token):
+        """Should return None when service has no settings endpoint (404)."""
+        respx.get("http://localhost:7701/settings").mock(
+            return_value=Response(404, text="Not Found")
+        )
+
+        result = await fetch_service_settings(sample_service, sample_token)
+
+        assert result is None
+
+    @respx.mock
+    @pytest.mark.asyncio
     async def test_handles_http_error(self, sample_service, sample_token):
         """Should handle HTTP errors gracefully."""
         respx.get("http://localhost:7701/settings").mock(
@@ -181,6 +193,38 @@ class TestFetchAllServicesSettings:
         assert all(r.success for r in results), (
             f"Failures: {[(r.service_name, r.error) for r in results if not r.success]}"
         )
+
+    @pytest.mark.asyncio
+    async def test_filters_out_404_services(self, sample_token):
+        """Should exclude services that return 404 (no settings endpoint)."""
+        services = [
+            ServiceInfo(
+                name="jarvis-auth",
+                host="localhost",
+                port=7701,
+                scheme="http",
+                url="http://localhost:7701",
+            ),
+            ServiceInfo(
+                name="jarvis-mcp",
+                host="localhost",
+                port=7709,
+                scheme="http",
+                url="http://localhost:7709",
+            ),
+        ]
+
+        async with respx.mock:
+            respx.get("http://localhost:7701/settings").respond(
+                200, json={"settings": [], "total": 0}
+            )
+            respx.get("http://localhost:7709/settings").respond(404, text="Not Found")
+
+            results = await fetch_all_services_settings(services, sample_token)
+
+        assert len(results) == 1
+        assert results[0].service_name == "jarvis-auth"
+        assert results[0].success is True
 
     @pytest.mark.asyncio
     async def test_handles_partial_failures(self, sample_token):

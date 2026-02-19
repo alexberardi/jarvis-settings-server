@@ -24,7 +24,7 @@ async def fetch_service_settings(
     service: ServiceInfo,
     token: str,
     category: str | None = None,
-) -> ServiceSettingsResult:
+) -> ServiceSettingsResult | None:
     """Fetch settings from a single service.
 
     Args:
@@ -33,7 +33,8 @@ async def fetch_service_settings(
         category: Optional category filter
 
     Returns:
-        ServiceSettingsResult with settings or error
+        ServiceSettingsResult with settings or error, or None if the service
+        has no settings endpoint (404).
     """
     settings = get_settings()
     settings_url = get_settings_url(service)
@@ -63,6 +64,9 @@ async def fetch_service_settings(
                     settings=settings_list.settings,
                     latency_ms=round(latency_ms, 2),
                 )
+            elif response.status_code == 404:
+                # Service has no settings endpoint — hide it from results
+                return None
             else:
                 return ServiceSettingsResult(
                     service_name=service.name,
@@ -113,7 +117,7 @@ async def fetch_all_services_settings(
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # Convert any exceptions to error results
+    # Convert exceptions to error results, filter out None (no settings endpoint)
     final_results: list[ServiceSettingsResult] = []
     for i, result in enumerate(results):
         if isinstance(result, Exception):
@@ -124,7 +128,7 @@ async def fetch_all_services_settings(
                     error=f"{type(result).__name__}: {result}",
                 )
             )
-        else:
+        elif result is not None:
             final_results.append(result)
 
     return final_results
