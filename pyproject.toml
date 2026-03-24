@@ -11,7 +11,8 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "jarvis-auth-client @ git+https://github.com/alexberardi/jarvis-auth-client.git@main",
+    "jarvis-auth-client @ git+https://github.com/alexberardi/jarvis-auth.git@main#subdirectory=client",
+    "jarvis-config-client @ git+https://github.com/alexberardi/jarvis-config-client.git@main",
 ]
 
 [project.optional-dependencies]
