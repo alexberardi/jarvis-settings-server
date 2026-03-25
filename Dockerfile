@@ -7,13 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-# Install core deps first (without jarvis-auth-client which is mounted in dev)
+# Install Python dependencies from pyproject.toml (includes jarvis client libs)
 COPY pyproject.toml .
-RUN pip install --no-cache-dir fastapi uvicorn[standard] httpx python-jose[cryptography] pydantic pydantic-settings
-
-# Copy application code
 COPY app/ ./app/
+RUN pip install --no-cache-dir .
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
