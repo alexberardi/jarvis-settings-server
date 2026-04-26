@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Centralized settings aggregator for Jarvis microservices"
 requires-python = ">=3.11"
 dependencies = [
-    "jarvis-log-client @ git+https://github.com/alexberardi/jarvis-log-client.git@46aa757",
+    "jarvis-log-client @ git+https://github.com/alexberardi/jarvis-log-client.git@1881043",
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.25.0",
     "httpx>=0.26.0",
