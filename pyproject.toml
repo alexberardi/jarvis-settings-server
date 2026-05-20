@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Centralized settings aggregator for Jarvis microservices"
 requires-python = ">=3.11"
 dependencies = [
-    "jarvis-log-client @ git+https://github.com/alexberardi/jarvis-log-client.git@e1e8f9f",
+    "jarvis-log-client @ git+https://github.com/alexberardi/jarvis-log-client.git@3c7da7e",
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.25.0",
     "httpx>=0.26.0",
@@ -12,7 +12,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "jarvis-auth-client @ git+https://github.com/alexberardi/jarvis-auth-client.git@4549b23",
-    "jarvis-config-client @ git+https://github.com/alexberardi/jarvis-config-client.git@ea1c63a",
+    "jarvis-config-client @ git+https://github.com/alexberardi/jarvis-config-client.git@c1c8903",
 ]
 
 [project.optional-dependencies]
