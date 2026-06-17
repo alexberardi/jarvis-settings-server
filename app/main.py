@@ -83,11 +83,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS - allow all origins for internal service communication
+# CORS - allow all origins for internal service communication.
+# allow_credentials=False: endpoints use header auth (Bearer JWT), not cookies,
+# and wildcard origins with credentials is invalid per the CORS spec.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
