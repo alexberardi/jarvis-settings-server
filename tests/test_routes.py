@@ -166,8 +166,15 @@ class TestListAllSettings:
         assert response.status_code == 503
 
 
-class TestGetServiceSettings:
-    """Test GET /v1/settings/{service} endpoint."""
+class TestGetServiceSettingsFilters:
+    """GET /v1/settings/{service} — service and category filtering.
+
+    Renamed 2026-07-14. This class was named TestGetServiceSettings — identical to
+    the class below it. Python overwrites the first definition, so pytest never saw
+    these tests: they did not fail, they simply never ran. Two of them
+    (empty_services_no_filter, service_filter_not_found) exist nowhere else, so that
+    coverage was silently absent while the suite reported green. Found by ruff F811.
+    """
 
     @respx.mock
     def test_get_single_service_settings(self, client, superuser_token, settings):
