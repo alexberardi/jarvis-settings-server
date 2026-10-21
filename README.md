@@ -1,12 +1,7 @@
 # jarvis-settings-server
 
-> **Deprecation candidate — do not extend.**
->
-> This service is **superseded by jarvis-config-service** (`/v1/settings/*` on port 7700),
-> which exposes the same surface (aggregate, get-by-service, update-by-key) with superuser
-> JWT auth. Nothing in the stack currently calls jarvis-settings-server — it is registered,
-> deployed, and unused. For new work, use config-service. Do not migrate consumers here or
-> add features; if you find a bug while it is still deployed, fix it minimally and move on.
+> [!WARNING]
+> **Retired: no longer maintained, and this repository will be archived.** Nothing used it, and jarvisd does not include it: settings live in the jarvisd admin. The old multi-container stack is replaced by jarvisd ([jarvis-server](https://github.com/alexberardi/jarvis-server)). New installs: [installer.jarvisautomation.io](https://installer.jarvisautomation.io). Moving an existing install: [Migrating from the Docker install](https://docs.jarvisautomation.dev/install/migrating-from-docker/).
 
 ## Purpose
 
